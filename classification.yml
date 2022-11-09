@@ -1,0 +1,21 @@
+name: classification
+
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.8
+  - biopython
+  - pandas
+  - jupyterlab
+  - scikit-learn
+  - matplotlib
+  - fasttree
+  - muscle=3.8.1551
+  - hhsuite
+  - hmmer
+  - prodigal
+  - tqdm
+  - ete3
