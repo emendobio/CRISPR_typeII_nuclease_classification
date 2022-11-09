@@ -7,7 +7,7 @@ Classification of type-II nucleases to subtypes
 There are three preliminary steps prior to running the code:
 
 1. Download and unzip the db file from here https://zenodo.org/record/7248722
-2. Create conda env from the yml file https://github.com/emendobio/CRISPR_type-II_classification/blob/main/classification.yml 
+2. Create conda env from the yml file https://github.com/emendobio/CRISPR_typeII_nuclease_classification/blob/main/classification.yml 
 3. Activate the conda env 
 
 ```
