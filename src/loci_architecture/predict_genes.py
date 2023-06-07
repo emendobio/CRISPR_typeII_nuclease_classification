@@ -1,14 +1,20 @@
+"""
 import re
+"""
 import pandas as pd
 import subprocess
 import os
 import glob
+"""
 import logging
 import numpy as np
+"""
 from Bio import SeqIO
-
+"""
 min_score_hmm = 40
+"""
 max_dist_from_nuclease = 5000
+"""
 min_gene_length = 200
 src_code_path = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
 logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
@@ -164,8 +170,12 @@ def read_annotated_genes_from_folder(curr_folder, start_pos=0, end_pos=np.inf):
 
 
 
+
+"""
 def read_orf_list_from_prodigal_fasta(prodigal_out_fasta):
     records = list(SeqIO.parse(prodigal_out_fasta, "fasta"))
+    if len(records) == 0:
+        return pd.DataFrame()
     res_list = []
     for r in records:
         header_info = r.description.split(' # ')
@@ -176,10 +186,15 @@ def read_orf_list_from_prodigal_fasta(prodigal_out_fasta):
 
 
 def write_orf_list(prodigal_out_fasta, orf_list_file):
+    required_columns = ['ORF','Start','End','Strand']
     df = read_orf_list_from_prodigal_fasta(prodigal_out_fasta)
-    df = df[['ORF','Start','End','Strand']]
+    if df.empty:
+        return False
+    assert all(col in df.columns for col in required_columns)
+    df = df[required_columns]
     df.to_csv(orf_list_file, sep='\t', index=False)
-
+    return True
+"""
 
 # Load data
 def aggregate_hmm_results(hmmer_results_folder, aggregated_hmm_file):
@@ -207,13 +222,13 @@ def read_hmm_result(in_file):
     return pd.DataFrame(hmm_results)
 
 
-
+"""
 def run_prodigal(dna_fasta, proteins_fasta, orf_list_file, prodigal_log_file):
     with open(prodigal_log_file, 'w') as prodigal_log:
         prod_cmd = ['prodigal' ,'-i', dna_fasta, '-a', proteins_fasta, '-p', 'meta']
         subprocess.run(prod_cmd, stdout=subprocess.DEVNULL, stderr=prodigal_log)
-        assert os.path.exists(proteins_fasta)
-        write_orf_list(proteins_fasta, orf_list_file)
+        assert os.path.exists(proteins_fasta), "prodigal error: {} wasn't created from {}".format(proteins_fasta, dna_fasta)
+        return write_orf_list(proteins_fasta, orf_list_file)
 
 
 def run_single_hmm_profile(proteins_fasta, hmm_profile, hmm_output_file, log_file):
@@ -243,7 +258,6 @@ def run_all_profiles_in_directory(hmm_folder, proteins_fasta, work_dir):
     return hmm_results
 
 
-
 def run_prodigal_on_contig(fasta_file, working_dir):
     proteins_fasta = '{}/proteins.faa'.format(working_dir)
     prodigal_log = '{}/prodigal.log'.format(working_dir)
@@ -252,7 +266,7 @@ def run_prodigal_on_contig(fasta_file, working_dir):
     assert os.path.exists(orf_list_file)
     assert os.path.exists(proteins_fasta)
     return proteins_fasta
-
+"""
 
 def get_hmm_results(proteins_fasta, profiles_folder, nuclease_pos, working_dir):
     hmmer_out_file = '{}/hmmer.tab'.format(working_dir)
@@ -261,3 +275,41 @@ def get_hmm_results(proteins_fasta, profiles_folder, nuclease_pos, working_dir):
     pos_arr = [int(x) for x in nuclease_pos.split("-")]
     res = read_annotated_genes_from_folder(working_dir, start_pos=pos_arr[0], end_pos=pos_arr[1])
     return res
+"""
+
+def get_hmm_results_from_prodigal_fasta(proteins_fasta, position_string, profiles_folder, working_dir, full_genes_list=True,
+                                        max_dist=max_dist_from_nuclease):
+    """
+        Proforms HMM search on a Prodigal fasta file.
+
+        Args:
+            fasta_file (str): The path to the fasta file resulting from Prodigal.
+
+            position_string (str): The position of the nuclease in the fasta file.
+
+            profiles_folder (str): The path to the local folder containing the HMM profiles.
+            The profiles are located in s3://emendobio-compute/L2/nuclease_classification_db/loci_profiles
+            and should be downloaded to a local folder
+
+            full_gened_list (bool): If True, returns all genes found in the region, not only the ones that match the pattern.
+
+            max_dist_from_nuclease (int): The maximum distance from the nuclease to search for genes.
+
+
+        Returns:
+            pandas.DataFrame: A dataframe containing the results of the HMM search.
+
+        """
+    pos = [int(x) for x in position_string.split('-')]
+    hmm_results = run_all_profiles_in_directory(profiles_folder, proteins_fasta, working_dir)
+    I = (hmm_results["start"] >= pos[0] - max_dist) & (
+                hmm_results["end"] <= pos[1] + max_dist)
+    hmm_results = hmm_results[I].sort_values("score", ascending=False).drop_duplicates("ORF").sort_values("start",
+                                                                                                          ascending=True)
+    genes_data = pd.read_csv('{}/genes.tab'.format(working_dir), sep='\t')
+    if full_genes_list:
+        hmm_results = pd.merge(genes_data, hmm_results[["ORF", "Hmm", "score"]], how='left').fillna(
+            {'Hmm': "None", 'score': 0})
+    else:
+        hmm_results = pd.merge(genes_data, hmm_results[["ORF", "Hmm", "score"]])
+    return hmm_results
