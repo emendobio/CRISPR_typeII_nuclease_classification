@@ -1,6 +1,3 @@
-"""
-import re
-"""
 import pandas as pd
 import subprocess
 import os
@@ -8,13 +5,8 @@ import glob
 import logging
 import numpy as np
 from Bio import SeqIO
-"""
-min_score_hmm = 40
-"""
+
 max_dist_from_nuclease = 5000
-"""
-min_gene_length = 200
-"""
 src_code_path = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
 logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
@@ -25,7 +17,6 @@ def parse_hmm_result_line(res_line):
     res = {"ORF": line_content[0],
            "query_accession": line_content[1],
            "tlen": line_content[2],
-           #"Hmm": line_content[3],
            "query_accession": line_content[4],
            "qlen": line_content[5],
            "E-value": line_content[6],
@@ -127,49 +118,8 @@ def get_index_of_gene(res, gene_name):
             print("{} multiple matches with scores {}".format(first_orf_name, list(scores_of_gene)))
         cas9_index = scores_of_gene.idxmax()
         return cas9_index
-"""
-def filter_best_match(annotated_genes):
-    prev_orf = ''
-    best_match = []
-    for _,row in annotated_genes.iterrows():
-        if row['ORF'] != prev_orf:
-            best_match.append(True)
-        else:
-            best_match.append(False)
-        prev_orf = row['ORF']
-    best_match_genes = annotated_genes[best_match]
-    return best_match_genes.reset_index(drop=True)
 
 
-
-def get_genes_hmm_data(curr_folder, start_pos, end_pos):
-
-    genes_file = '{}/genes.tab'.format(curr_folder)
-    hmmer_file = '{}/hmmer.tab'.format(curr_folder)
-    genes_data = pd.read_csv(genes_file, sep='\t')
-    hmmer_data = pd.read_csv(hmmer_file, sep='\t')
-    I = (genes_data['Start'] >= start_pos - max_dist_from_nuclease) & (genes_data['End'] <= end_pos + max_dist_from_nuclease) & (genes_data['End']  - genes_data['Start'] >=  min_gene_length)
-    genes_data = genes_data[I]
-    I = hmmer_data['score'] >= min_score_hmm
-    hmmer_data = hmmer_data[I]
-    hmmer_data = pd.concat([hmmer_data, pd.DataFrame({'ORF': list(genes_data['ORF']), 'Hmm': 'None', 'score': 0})])
-    annotated_genes = pd.merge(genes_data, hmmer_data, on='ORF').sort_values(by=['Start', 'score'],
-                                                                             ascending=[True, False])
-    return annotated_genes
-
-
-def read_annotated_genes_from_folder(curr_folder, start_pos=0, end_pos=np.inf):
-    annotated_genes = get_genes_hmm_data(curr_folder, start_pos, end_pos)
-    if annotated_genes.empty:
-        return annotated_genes
-    best_match_genes = filter_best_match(annotated_genes)
-    assert best_match_genes['score'].min() >=0
-    return best_match_genes.reset_index(drop=True)
-
-
-
-
-"""
 def read_orf_list_from_prodigal_fasta(prodigal_out_fasta):
     records = list(SeqIO.parse(prodigal_out_fasta, "fasta"))
     if len(records) == 0:
@@ -207,20 +157,8 @@ def aggregate_hmm_results(hmmer_results_folder, aggregated_hmm_file):
     hmm_df = pd.concat(non_empty_res_list)
     hmm_df.reset_index(drop=True, inplace=True)
     return hmm_df.drop_duplicates()
-"""
-def read_hmm_result(in_file):
-    hmm_results = []
-    with open(in_file, "r") as f:
-        line = f.readline()
-        while line:
-            if not line.startswith('#'):
-                line_parts = re.split('\s+', line.rstrip())
-                hmm_results.append({'ORF':line_parts[0],'ORF_accession':line_parts[1], 'HMM':line_parts[3],'HMM_accession':line_parts[4], 'Score':float(line_parts[7])})
-            line = f.readline()
-    return pd.DataFrame(hmm_results)
 
 
-"""
 def run_prodigal(dna_fasta, proteins_fasta, orf_list_file, prodigal_log_file):
     with open(prodigal_log_file, 'w') as prodigal_log:
         prod_cmd = ['prodigal' ,'-i', dna_fasta, '-a', proteins_fasta, '-p', 'meta']
@@ -264,16 +202,7 @@ def run_prodigal_on_contig(fasta_file, working_dir):
     assert os.path.exists(orf_list_file)
     assert os.path.exists(proteins_fasta)
     return proteins_fasta
-"""
 
-def get_hmm_results(proteins_fasta, profiles_folder, nuclease_pos, working_dir):
-    hmmer_out_file = '{}/hmmer.tab'.format(working_dir)
-    hmm_results = run_all_profiles_in_directory(profiles_folder, proteins_fasta, working_dir)
-    hmm_results.to_csv(hmmer_out_file, sep='\t', index=False)
-    pos_arr = [int(x) for x in nuclease_pos.split("-")]
-    res = read_annotated_genes_from_folder(working_dir, start_pos=pos_arr[0], end_pos=pos_arr[1])
-    return res
-"""
 
 def get_hmm_results_from_prodigal_fasta(proteins_fasta, position_string, profiles_folder, working_dir, full_genes_list=True,
                                         max_dist=max_dist_from_nuclease):
