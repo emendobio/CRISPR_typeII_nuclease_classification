@@ -15,16 +15,17 @@ from utils import hmm_utils as hu
 def get_classifications_data(fasta_file, nuclease_position, profiles_folder, cas9_model, cas1_model, cas9_seq):
     with tempfile.TemporaryDirectory() as working_dir:
         proteins_fasta = pg.run_prodigal_on_contig(fasta_file, working_dir)
-        print(proteins_fasta, profiles_folder, nuclease_position, working_dir)
-        hmm_results = pg.get_hmm_results(proteins_fasta, profiles_folder, nuclease_position, working_dir)
-        patterns = pg.get_type_II_patterns()
-        loci_architecture_classification = pg.match_all_patterns(hmm_results, patterns)
+        if not proteins_fasta:
+            return {'loci_architecture':'None'}
+        else:
+            hmm_results = pg.get_hmm_results_from_prodigal_fasta(proteins_fasta, nuclease_position, profiles_folder, working_dir, True)
+            patterns = pg.get_type_II_patterns()
+            loci_architecture_classification = pg.match_all_patterns(hmm_results, patterns)
         cas9_record = SeqRecord(Seq(cas9_seq),id="cas9_nuclease", description="cas9_nuclease",name="cas9_nuclease")
         cas1_record = cac.get_record_of_orf_from_fasta(hmm_results, "Cas1", proteins_fasta)
-        print(cas1_record.seq)
         cas1_classification = cac.classify_sequence_record(cas1_record, cas1_model, working_dir)
         cas9_classification = cac.classify_sequence_record(cas9_record, cas9_model, working_dir)
-    res_map = {'loci_architecture':[loci_architecture_classification]}
+    res_map = {'loci_architecture':loci_architecture_classification}
     if cas1_classification:
         res_map.update({'cas1_classification': cas1_classification['clade'], 'cas1_dist': cas1_classification['Koonin_distance']})
     if cas9_classification:
