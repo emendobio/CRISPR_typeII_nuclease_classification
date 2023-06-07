@@ -5,10 +5,8 @@ import pandas as pd
 import subprocess
 import os
 import glob
-"""
 import logging
 import numpy as np
-"""
 from Bio import SeqIO
 """
 min_score_hmm = 40
@@ -16,6 +14,7 @@ min_score_hmm = 40
 max_dist_from_nuclease = 5000
 """
 min_gene_length = 200
+"""
 src_code_path = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
 logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
@@ -26,14 +25,14 @@ def parse_hmm_result_line(res_line):
     res = {"ORF": line_content[0],
            "query_accession": line_content[1],
            "tlen": line_content[2],
-           "Hmm": line_content[3],
+           #"Hmm": line_content[3],
            "query_accession": line_content[4],
            "qlen": line_content[5],
            "E-value": line_content[6],
-           "score": line_content[7],
-           "start": line_content[23],
-           "end": line_content[25],
-           "strand": line_content[27]}
+           "score": float(line_content[7]),
+           "start": int(line_content[23]),
+           "end": int(line_content[25]),
+           "strand": int(line_content[27])}
     return res
 
 
@@ -49,13 +48,13 @@ def parse_hmm_res_file(hmm_res_file):
     lines_filtered = [x for x in lines if x[0] != "#"]
     if lines_filtered:
         df = parse_hmm_result_lines(lines_filtered)
+        df["Hmm"] = hmm_res_file.split("/")[-1].split(".")[0]
     else:
         df = pd.DataFrame(
             columns=["ORF", "query_accession", "tlen", "Hmm", "query_accession", "qlen", "E-value",
                      "score", "start",
                      "end", "strand"])
     return df
-
 
 def get_cas9_index(res):
     for x in ['Cas9', 'RuvC_III', 'HNH_4','spcas9_818_875','spcas9_975_999']:
@@ -104,7 +103,7 @@ def match_all_patterns(hmm_res, patterns_df):
     cas9_index = get_cas9_index(hmm_res)
     if cas9_index == -1:
         return "NA"
-    cas9_strand = int(hmm_res.iloc[cas9_index]['strand'])
+    cas9_strand = int(hmm_res.iloc[cas9_index]['Strand'])
     for index, curr_pattern in patterns_df.iterrows():
         if match_pattern(hmm_res, curr_pattern, cas9_index, cas9_strand):
             return curr_pattern['pattern_name']
@@ -128,8 +127,7 @@ def get_index_of_gene(res, gene_name):
             print("{} multiple matches with scores {}".format(first_orf_name, list(scores_of_gene)))
         cas9_index = scores_of_gene.idxmax()
         return cas9_index
-
-
+"""
 def filter_best_match(annotated_genes):
     prev_orf = ''
     best_match = []
@@ -194,7 +192,7 @@ def write_orf_list(prodigal_out_fasta, orf_list_file):
     df = df[required_columns]
     df.to_csv(orf_list_file, sep='\t', index=False)
     return True
-"""
+
 
 # Load data
 def aggregate_hmm_results(hmmer_results_folder, aggregated_hmm_file):
@@ -209,7 +207,7 @@ def aggregate_hmm_results(hmmer_results_folder, aggregated_hmm_file):
     hmm_df = pd.concat(non_empty_res_list)
     hmm_df.reset_index(drop=True, inplace=True)
     return hmm_df.drop_duplicates()
-
+"""
 def read_hmm_result(in_file):
     hmm_results = []
     with open(in_file, "r") as f:
