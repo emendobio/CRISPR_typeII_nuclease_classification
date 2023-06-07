@@ -17,7 +17,7 @@ downstream phage_antirepressor,None,Cas1,Cas2 +,+,+,+ Cas9,Par,None,Cas1,Cas2
 downstream phage_antirepressor,Cas1,Cas2 +,+,+ Cas9,Par,Cas1,Cas2
 downstream phage_antirepressor,Cas1,Cas1,Cas2 +,+,+,+ Cas9,Par,Cas1,Cas1,Cas2
 downstream phage_antirepressor,Cas1 +,+ Cas9,Par,Cas1
-downstream RuvC_III,Cas1,Cas2 +,+,+ Cas9,Cas1,Cas2
+downstream RuvC_III,Cas1,Cas2 +,+,+ Cas9,Cas9,Cas1,Cas2
 downstream RhuM,RhuM,RhuM,Cas1,Cas2 +,+,+,+,+ Cas9,RhuM,Cas1,Cas2
 downstream RhuM,RhuM,Cas1,Cas2 +,+,+,+ Cas9,RhuM,Cas1,Cas2
 downstream RhuM,Cas1,Cas2 +,+,+ Cas9,RhuM,Cas1,Cas2
