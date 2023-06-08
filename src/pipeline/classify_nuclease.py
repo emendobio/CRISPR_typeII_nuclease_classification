@@ -34,7 +34,7 @@ def get_classifications_data(fasta_file, nuclease_position, profiles_folder, cas
 
 def get_hnh_data(cas9_seq, db):
     min_hnh_score = 55
-    res = hu.run_single_sequence_with_profiles_folder(cas9_seq, db)
+    res = hu.run_single_sequence_with_local_profiles_folder(cas9_seq, db)
     if res.empty:
         return {'HNH_Profile':'None'}
     best_match = res.iloc[0]
