@@ -172,6 +172,8 @@ def extract_hhalign_score(results_file):
 
 def get_record_of_orf_from_fasta(hmm_results, gene, proteins_fasta):
     gene_index = pg.get_index_of_gene(hmm_results, gene)
+    if gene_index == -1:
+        return None
     orf = hmm_results.iloc[gene_index]["ORF"]
     with open(proteins_fasta) as handle:
         for record in SeqIO.parse(handle, "fasta"):

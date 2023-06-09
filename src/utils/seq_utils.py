@@ -5,7 +5,6 @@ import pandas as pd
 from Bio.Seq import Seq
 from Bio import SeqIO
 from Bio.Align import substitution_matrices
-import s3fs
 
 def get_reverse_complement(original_seq):
     seq = Seq(original_seq)
@@ -64,22 +63,10 @@ def write_to_temp_fasta(query_seq, working_local_dir):
     write_fasta_file_from_list(query_fasta, [['temp_fasta', query_seq]])
     return query_fasta
 
-def get_fasta_seq_from_local_file(fasta_file):
+def get_fasta_seq_from_file(fasta_file):
     records = list(SeqIO.parse(fasta_file, "fasta"))
     assert len(records) == 1
     return records[0]
-
-
-def get_fasta_seq_from_file(fasta_file):
-    if fasta_file.startswith('s3://'):
-        fs = s3fs.S3FileSystem(anon=False)
-        with tempfile.TemporaryDirectory() as working_local_dir:
-            local_fasta = '{}/sequence.fasta'.format(working_local_dir)
-            fs.get(fasta_file, local_fasta)
-            fasta_seq = get_fasta_seq_from_local_file(local_fasta)
-    else:
-        fasta_seq = get_fasta_seq_from_local_file(fasta_file)
-    return fasta_seq
 
 
 def write_fasta_file_from_list(fasta_name, fasta_content_list):
@@ -104,28 +91,6 @@ def create_db(fasta_file, out_dir):
     assert os.path.exists("{}.nin".format(new_db))
     assert os.path.exists("{}.nhr".format(new_db))
     return new_db
-
-
-def read_fasta_to_dataframe(fasta_file):
-    if fasta_file.startswith('s3://'):
-        fs = s3fs.S3FileSystem(anon=False)
-        with tempfile.TemporaryDirectory() as working_local_dir:
-            local_fasta = '{}/sequence.fasta'.format(working_local_dir)
-            fs.get(fasta_file, local_fasta)
-            fasta_data = read_local_fasta_to_dataframe(local_fasta)
-    else:
-        fasta_data = read_local_fasta_to_dataframe(fasta_file)
-    return fasta_data
-
-
-def read_local_fasta_to_dataframe(fasta_file):
-    records = list(SeqIO.parse(fasta_file, "fasta"))
-    data = {'id':[], 'seq':[]}
-    for r in records:
-        data['id'].append(r.id)
-        data['seq'].append(str(r.seq))
-    fasta_data = pd.DataFrame(data)
-    return fasta_data
 
 
 def write_df_to_fasta(df, fasta_file):

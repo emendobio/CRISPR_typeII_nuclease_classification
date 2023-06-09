@@ -11,9 +11,9 @@ There are three preliminary steps prior to running the code:
 3. Activate the conda env 
 
 ```
-wget https://zenodo.org/record/7248722/files/nuclease_classification_db.tar.gz
+wget https://zenodo.org/record/8013752/files/nuclease_classification_db.tar.gz
 
-command conda create --name classification classification.yml
+conda env create --name classification -f classification.yml
 
 conda activate classification
 

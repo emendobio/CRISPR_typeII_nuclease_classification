@@ -2,7 +2,6 @@ import os
 import glob
 import tempfile
 import sys
-import s3fs
 import numpy as np
 import pandas as pd
 src_code_path = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-1])
@@ -46,13 +45,6 @@ def run_single_sequence(protein_sequence, db, cpu_num=2):
         df = pd.read_csv(tsv_file, sep='\t').sort_values('Score', ascending=False)
     return df
 
-def get_profile_names(dbname):
-    assert dbname.startswith("s3://")
-    fs = s3fs.S3FileSystem(anon=False)
-    profiles_list = [x for x in fs.ls(dbname)]
-    profiles_list = [x.split('/')[-1][:-4] for x in profiles_list]
-    profiles_list.sort()
-    return profiles_list
 
 def get_hmm_score(hmmer_res, hmm_name):
     min_prob = 0
@@ -96,24 +88,6 @@ def run_single_sequence_with_profile(protein_sequence, hmm_profile):
         hh.convert_file(hhr_file, tsv_file, 100)
         df = pd.read_csv(tsv_file, sep='\t').sort_values('Score', ascending=False)
     return df
-
-
-def download_profiles_folder_from_s3(profiles_folder, temp_profiles_folder):
-    fs = s3fs.S3FileSystem(anon=False)
-    profiles_list = [x for x in fs.ls(profiles_folder)]
-    for p in profiles_list:
-        remote_file = "s3://{}".format(p)
-        local_file = '{}/{}'.format(temp_profiles_folder, p.split('/')[-1])
-        fs.get(remote_file, local_file)
-
-
-def run_single_sequence_with_profiles_folder(protein_sequence, profiles_folder):
-    with tempfile.TemporaryDirectory() as temp_profiles_folder:
-        if profiles_folder.startswith("s3://"):
-            download_profiles_folder_from_s3(profiles_folder, temp_profiles_folder)
-            profiles_folder = temp_profiles_folder
-        res = run_single_sequence_with_local_profiles_folder(protein_sequence, profiles_folder)
-        return res
 
 
 def run_single_sequence_with_local_profiles_folder(protein_sequence, profiles_folder):
