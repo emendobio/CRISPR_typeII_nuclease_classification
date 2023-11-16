@@ -41,17 +41,18 @@ python crispr_typeII_classification/src/pipeline/classify_nuclease.py \
 
 ### Output
 The output is a json format containing the following fields:
-cas9_score          : reflects the likelihood of the protein to be a Cas9 nuclease
-ruvc_score          : score of the RuvC domain
-hnh_score           : score of the HNH domain (exists in type II nucleases only)
-is_cas9             : True/False
-has_correct_start   : truncated (True/False)
-was_fixed           : True/False
-protein_seq         : AA sequence
-loci_architecture   : type of architecture
-cas9_classification : The subtype classification
-cas9_dist           : Distance from the closest HMM profile
-HNH_Profile         : The HNH signature
+
+- cas9_score          : reflects the likelihood of the protein to be a Cas9 nuclease
+- ruvc_score          : score of the RuvC domain
+- hnh_score           : score of the HNH domain (exists in type II nucleases only)
+- is_cas9             : True/False
+- has_correct_start   : truncated (True/False)
+- was_fixed           : True/False
+- protein_seq         : AA sequence
+- loci_architecture   : type of architecture
+- cas9_classification : The subtype classification
+- cas9_dist           : Distance from the closest HMM profile
+- HNH_Profile         : The HNH signature
 
 
   
